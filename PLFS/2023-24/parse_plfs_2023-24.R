@@ -4,8 +4,10 @@
 # This script reads the PLFS 2023-24 raw data files and creates
 # analysis-ready Parquet files.
 
-# Set working directory to project root
-setwd("D:/Opencode/Data Analysis/IndiaData")
+# Set working directory to project root (cross-platform)
+script_dir <- dirname(normalizePath(sys.frame(1)$ofile, winslash = "/", mustWork = TRUE))
+project_root <- normalizePath(file.path(script_dir, "..", ".."), winslash = "/", mustWork = TRUE)
+setwd(project_root)
 
 # Load required functions
 source("R/01_config.R")
