@@ -1,0 +1,119 @@
+# ============================================================================
+# IndiaData - Git Ignore File
+# ============================================================================
+# This file specifies files/directories that Git should ignore
+
+# ============================================================================
+# SECURITY - Configuration Files with Sensitive Data
+# ============================================================================
+config.yaml
+config_*.yaml
+!config.yaml.example
+!config.example.yaml
+
+# ============================================================================
+# R Studio
+# ============================================================================
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.httr-oauth
+
+# ============================================================================
+# Large Data Files (Raw Survey Data)
+# ============================================================================
+data/raw/*.TXT
+data/raw/*.txt
+data/raw/*.zip
+data/raw/*.xlsx
+data/raw/*.xls
+data/raw/*.csv
+!data/raw/.gitkeep
+
+# ============================================================================
+# Processed Data (Can be regenerated)
+# ============================================================================
+data/processed/*.parquet
+data/processed/*.csv
+data/processed/*.rds
+!data/processed/.gitkeep
+
+# ============================================================================
+# Generated Outputs
+# ============================================================================
+outputs/**
+!outputs/
+!outputs/tables/
+!outputs/figures/
+!outputs/**/.gitkeep
+outputs/tables/*.csv
+outputs/tables/*.docx
+outputs/tables/*.tex
+outputs/tables/*.html
+outputs/figures/*.png
+outputs/figures/*.pdf
+outputs/figures/*.jpg
+outputs/figures/*.svg
+
+# Keep output directories with .gitkeep
+!outputs/tables/.gitkeep
+!outputs/figures/.gitkeep
+
+# ============================================================================
+# Reports
+# ============================================================================
+*.html
+*.docx
+*.pdf
+!analysis/templates/*.qmd
+
+# ============================================================================
+# Temporary Files
+# ============================================================================
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================================================
+# PLFS raw artifacts and binaries
+# ============================================================================
+PLFS/**/raw/
+PLFS/**/csv/
+PLFS/**/*.TXT
+PLFS/**/*.txt
+PLFS/**/*.zip
+PLFS/**/*.rar
+PLFS/**/*.exe
+
+# ============================================================================
+# Python (for MCP servers)
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ============================================================================
+# IDE
+# ============================================================================
+.vscode/
+.idea/
+*.sublime-*
+
+# ============================================================================
+# OS
+# ============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini

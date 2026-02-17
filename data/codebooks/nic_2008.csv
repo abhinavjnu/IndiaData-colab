@@ -1,0 +1,89 @@
+nic_2digit,division_name,section,section_name
+01,Crop and animal production hunting and related service activities,A,Agriculture forestry and fishing
+02,Forestry and logging,A,Agriculture forestry and fishing
+03,Fishing and aquaculture,A,Agriculture forestry and fishing
+05,Mining of coal and lignite,B,Mining and quarrying
+06,Extraction of crude petroleum and natural gas,B,Mining and quarrying
+07,Mining of metal ores,B,Mining and quarrying
+08,Other mining and quarrying,B,Mining and quarrying
+09,Mining support service activities,B,Mining and quarrying
+10,Manufacture of food products,C,Manufacturing
+11,Manufacture of beverages,C,Manufacturing
+12,Manufacture of tobacco products,C,Manufacturing
+13,Manufacture of textiles,C,Manufacturing
+14,Manufacture of wearing apparel,C,Manufacturing
+15,Manufacture of leather and related products,C,Manufacturing
+16,Manufacture of wood and products of wood and cork,C,Manufacturing
+17,Manufacture of paper and paper products,C,Manufacturing
+18,Printing and reproduction of recorded media,C,Manufacturing
+19,Manufacture of coke and refined petroleum products,C,Manufacturing
+20,Manufacture of chemicals and chemical products,C,Manufacturing
+21,Manufacture of pharmaceuticals medicinal chemical and botanical products,C,Manufacturing
+22,Manufacture of rubber and plastics products,C,Manufacturing
+23,Manufacture of other non-metallic mineral products,C,Manufacturing
+24,Manufacture of basic metals,C,Manufacturing
+25,Manufacture of fabricated metal products except machinery and equipment,C,Manufacturing
+26,Manufacture of computer electronic and optical products,C,Manufacturing
+27,Manufacture of electrical equipment,C,Manufacturing
+28,Manufacture of machinery and equipment n.e.c.,C,Manufacturing
+29,Manufacture of motor vehicles trailers and semi-trailers,C,Manufacturing
+30,Manufacture of other transport equipment,C,Manufacturing
+31,Manufacture of furniture,C,Manufacturing
+32,Other manufacturing,C,Manufacturing
+33,Repair and installation of machinery and equipment,C,Manufacturing
+35,Electricity gas steam and air conditioning supply,D,Electricity gas steam and air conditioning supply
+36,Water collection treatment and supply,E,Water supply sewerage waste management and remediation
+37,Sewerage,E,Water supply sewerage waste management and remediation
+38,Waste collection treatment and disposal activities materials recovery,E,Water supply sewerage waste management and remediation
+39,Remediation activities and other waste management services,E,Water supply sewerage waste management and remediation
+41,Construction of buildings,F,Construction
+42,Civil engineering,F,Construction
+43,Specialized construction activities,F,Construction
+45,Wholesale and retail trade and repair of motor vehicles and motorcycles,G,Wholesale and retail trade
+46,Wholesale trade except of motor vehicles and motorcycles,G,Wholesale and retail trade
+47,Retail trade except of motor vehicles and motorcycles,G,Wholesale and retail trade
+49,Land transport and transport via pipelines,H,Transportation and storage
+50,Water transport,H,Transportation and storage
+51,Air transport,H,Transportation and storage
+52,Warehousing and support activities for transportation,H,Transportation and storage
+53,Postal and courier activities,H,Transportation and storage
+55,Accommodation,I,Accommodation and food service activities
+56,Food and beverage service activities,I,Accommodation and food service activities
+58,Publishing activities,J,Information and communication
+59,Motion picture video and television programme production sound recording and music publishing,J,Information and communication
+60,Programming and broadcasting activities,J,Information and communication
+61,Telecommunications,J,Information and communication
+62,Computer programming consultancy and related activities,J,Information and communication
+63,Information service activities,J,Information and communication
+64,Financial service activities except insurance and pension funding,K,Financial and insurance activities
+65,Insurance reinsurance and pension funding except compulsory social security,K,Financial and insurance activities
+66,Activities auxiliary to financial service and insurance activities,K,Financial and insurance activities
+68,Real estate activities,L,Real estate activities
+69,Legal and accounting activities,M,Professional scientific and technical activities
+70,Activities of head offices management consultancy activities,M,Professional scientific and technical activities
+71,Architectural and engineering activities technical testing and analysis,M,Professional scientific and technical activities
+72,Scientific research and development,M,Professional scientific and technical activities
+73,Advertising and market research,M,Professional scientific and technical activities
+74,Other professional scientific and technical activities,M,Professional scientific and technical activities
+75,Veterinary activities,M,Professional scientific and technical activities
+77,Rental and leasing activities,N,Administrative and support service activities
+78,Employment activities,N,Administrative and support service activities
+79,Travel agency tour operator and other reservation service and related activities,N,Administrative and support service activities
+80,Security and investigation activities,N,Administrative and support service activities
+81,Services to buildings and landscape activities,N,Administrative and support service activities
+82,Office administrative office support and other business support activities,N,Administrative and support service activities
+84,Public administration and defence compulsory social security,O,Public administration and defence
+85,Education,P,Education
+86,Human health activities,Q,Human health and social work activities
+87,Residential care activities,Q,Human health and social work activities
+88,Social work activities without accommodation,Q,Human health and social work activities
+90,Creative arts and entertainment activities,R,Arts entertainment and recreation
+91,Libraries archives museums and other cultural activities,R,Arts entertainment and recreation
+92,Gambling and betting activities,R,Arts entertainment and recreation
+93,Sports activities and amusement and recreation activities,R,Arts entertainment and recreation
+94,Activities of membership organizations,S,Other service activities
+95,Repair of computers and personal and household goods,S,Other service activities
+96,Other personal service activities,S,Other service activities
+97,Activities of households as employers of domestic personnel,T,Activities of households as employers
+98,Undifferentiated goods and services producing activities of private households for own use,T,Activities of households as employers
+99,Activities of extraterritorial organizations and bodies,U,Activities of extraterritorial organizations

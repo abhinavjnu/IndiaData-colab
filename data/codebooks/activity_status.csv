@@ -1,0 +1,22 @@
+status_code,status_description,category,in_labour_force,employed
+11,Worked in household enterprise (self-employed): own account worker,Self-employed,TRUE,TRUE
+12,Worked in household enterprise (self-employed): employer,Self-employed,TRUE,TRUE
+21,Worked as helper in household enterprise (unpaid family worker),Self-employed,TRUE,TRUE
+31,Worked as regular salaried/wage employee,Regular wage/salaried,TRUE,TRUE
+41,Worked as casual wage labour in public works,Casual labour,TRUE,TRUE
+42,Worked as casual wage labour in public works (variant),Casual labour,TRUE,TRUE
+51,Worked as casual wage labour in other types of work,Casual labour,TRUE,TRUE
+61,Did not work but was seeking and/or available for work,Unemployed,TRUE,FALSE
+62,Did not work but was available for work,Unemployed,TRUE,FALSE
+71,Attended educational institution,Not in labour force,FALSE,FALSE
+72,Attended educational institution (also engaged in economic activity),Student worker,TRUE,TRUE
+81,Attended domestic duties only,Not in labour force,FALSE,FALSE
+82,Attended domestic duties (also engaged in economic activity),Domestic worker,TRUE,TRUE
+91,Attended domestic duties and was also engaged in free collection of goods,Not in labour force,FALSE,FALSE
+92,Rentiers pensioners remittance recipients etc.,Not in labour force,FALSE,FALSE
+93,Not able to work due to disability,Not in labour force,FALSE,FALSE
+94,Beggars vagrants etc.,Not in labour force,FALSE,FALSE
+95,Others,Not in labour force,FALSE,FALSE
+97,Did not work due to sickness (for casual workers),Temporarily not working,TRUE,TRUE
+98,Did not work due to other reasons (for casual workers),Temporarily not working,TRUE,TRUE
+99,Status not reported,Unknown,FALSE,FALSE

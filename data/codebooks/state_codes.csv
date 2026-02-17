@@ -1,0 +1,38 @@
+state_code,state_name,state_name_short,region
+01,Jammu & Kashmir,JK,North
+02,Himachal Pradesh,HP,North
+03,Punjab,PB,North
+04,Chandigarh,CH,North
+05,Uttarakhand,UK,North
+06,Haryana,HR,North
+07,Delhi,DL,North
+08,Rajasthan,RJ,North
+09,Uttar Pradesh,UP,North
+10,Bihar,BR,East
+11,Sikkim,SK,East
+12,Arunachal Pradesh,AR,Northeast
+13,Nagaland,NL,Northeast
+14,Manipur,MN,Northeast
+15,Mizoram,MZ,Northeast
+16,Tripura,TR,Northeast
+17,Meghalaya,ML,Northeast
+18,Assam,AS,Northeast
+19,West Bengal,WB,East
+20,Jharkhand,JH,East
+21,Odisha,OD,East
+22,Chhattisgarh,CG,Central
+23,Madhya Pradesh,MP,Central
+24,Gujarat,GJ,West
+25,Daman & Diu,DD,West
+26,Dadra & Nagar Haveli,DN,West
+27,Maharashtra,MH,West
+28,Andhra Pradesh,AP,South
+29,Karnataka,KA,South
+30,Goa,GA,West
+31,Lakshadweep,LD,South
+32,Kerala,KL,South
+33,Tamil Nadu,TN,South
+34,Puducherry,PY,South
+35,Andaman & Nicobar Islands,AN,Islands
+36,Telangana,TG,South
+37,Ladakh,LA,North

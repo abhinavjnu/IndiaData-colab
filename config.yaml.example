@@ -1,0 +1,46 @@
+# ============================================================================
+# India Microdata Analysis - Configuration Example
+# ============================================================================
+# Copy this file to config.yaml and add your API key
+# DO NOT commit config.yaml to version control (it's in .gitignore)
+
+api:
+  base_url: "https://microdata.gov.in/NADA/index.php"
+  api_key: "YOUR_API_KEY_HERE"  # Get from microdata.gov.in
+
+paths:
+  raw_data: "data/raw"
+  processed_data: "data/processed"
+  codebooks: "data/codebooks"
+  tables: "outputs/tables"
+  figures: "outputs/figures"
+
+settings:
+  # Default survey to work with
+  default_survey: "PLFS"
+  
+  # Output format for processed data: "parquet" (recommended) or "csv"
+  save_format: "parquet"
+  
+  # Number of decimal places for estimates
+  decimal_places: 2
+  
+  # Confidence level for intervals (0.95 = 95%)
+  confidence_level: 0.95
+
+# Survey-specific settings
+surveys:
+  plfs:
+    # Weight formula: MULT / (NO_QTR * 100) for sub-sample
+    weight_divisor: 100
+    # Variables for survey design
+    strata_vars: ["Stratum", "Sub_Stratum"]
+    cluster_var: "FSU"
+    weight_var: "MULT"
+    quarter_var: "NO_QTR"
+    
+  hces:
+    weight_divisor: 100
+    strata_vars: ["Stratum", "Sub_Stratum"]
+    cluster_var: "FSU"
+    weight_var: "MULT"

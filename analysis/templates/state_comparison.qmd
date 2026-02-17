@@ -1,0 +1,319 @@
+---
+title: "State-wise Labour Market Comparison"
+subtitle: "Deep Dive into Regional Labour Force Patterns"
+author: "Your Name"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    theme: cosmo
+  docx:
+    toc: true
+  pdf:
+    toc: true
+execute:
+  echo: true
+  warning: false
+  message: false
+params:
+  data_file: "plfs_2022_23_person"
+  survey_year: "2022-23"
+  focus_states: null  # Set to c("Maharashtra", "Tamil Nadu") to focus on specific states
+  compare_national: true
+---
+
+```{r setup}
+#| include: false
+
+source(here::here("R/01_config.R"))
+source(here::here("R/03_read_microdata.R"))
+source(here::here("R/04_survey_design.R"))
+source(here::here("R/06_plfs_indicators.R"))
+source(here::here("R/08_codebook_utils.R"))
+source(here::here("R/09_export_tables.R"))
+source(here::here("R/10_viz_themes.R"))
+
+library(knitr)
+library(kableExtra)
+```
+
+# Overview
+
+This report provides a detailed state-wise comparison of labour market indicators from PLFS `r params$survey_year`.
+
+```{r load-data}
+#| label: load-data
+
+persons <- load_from_parquet(params$data_file)
+persons <- decode_all(persons, state_col = "State", sex_col = "Sex", sector_col = "Sector")
+design <- create_plfs_design(persons)
+```
+
+---
+
+# State Rankings
+
+## Labour Force Participation Rate
+
+```{r lfpr-ranking}
+#| label: lfpr-ranking
+#| fig-width: 10
+#| fig-height: 12
+
+by_state <- calc_indicators_by_state(design, add_names = TRUE)
+setorder(by_state, -lfpr)
+
+# National average for reference
+national <- calc_all_indicators(design)
+nat_lfpr <- national$lfpr
+
+# Add comparison to national
+by_state[, lfpr_diff := lfpr - nat_lfpr]
+by_state[, above_national := lfpr_diff > 0]
+
+# Plot
+ggplot(by_state[!is.na(state_name)], 
+       aes(x = reorder(state_name, lfpr), y = lfpr, fill = above_national)) +
+  geom_col(width = 0.7) +
+  geom_hline(yintercept = nat_lfpr, linetype = "dashed", color = "red", linewidth = 0.8) +
+  annotate("text", x = 3, y = nat_lfpr + 2, 
+           label = sprintf("National: %.1f%%", nat_lfpr), 
+           color = "red", size = 3, hjust = 0) +
+  geom_text(aes(label = sprintf("%.1f", lfpr)), hjust = -0.2, size = 2.5) +
+  coord_flip() +
+  scale_fill_manual(values = c("TRUE" = "#2E5B88", "FALSE" = "#E57200"), guide = "none") +
+  scale_y_continuous(limits = c(0, max(by_state$lfpr) * 1.15)) +
+  labs(
+    title = sprintf("Labour Force Participation Rate by State, PLFS %s", params$survey_year),
+    subtitle = "Red dashed line = National average",
+    x = NULL,
+    y = "LFPR (%)"
+  ) +
+  theme_publication() +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+## Unemployment Rate
+
+```{r ur-ranking}
+#| label: ur-ranking
+#| fig-width: 10
+#| fig-height: 12
+
+setorder(by_state, -ur)
+nat_ur <- national$ur
+
+by_state[, ur_diff := ur - nat_ur]
+by_state[, ur_above_national := ur_diff > 0]
+
+ggplot(by_state[!is.na(state_name)], 
+       aes(x = reorder(state_name, ur), y = ur, fill = ur_above_national)) +
+  geom_col(width = 0.7) +
+  geom_hline(yintercept = nat_ur, linetype = "dashed", color = "red", linewidth = 0.8) +
+  annotate("text", x = 3, y = nat_ur + 0.5, 
+           label = sprintf("National: %.1f%%", nat_ur),
+           color = "red", size = 3, hjust = 0) +
+  geom_text(aes(label = sprintf("%.1f", ur)), hjust = -0.2, size = 2.5) +
+  coord_flip() +
+  scale_fill_manual(values = c("TRUE" = "#E57200", "FALSE" = "#2E5B88"), guide = "none") +
+  scale_y_continuous(limits = c(0, max(by_state$ur) * 1.2)) +
+  labs(
+    title = sprintf("Unemployment Rate by State, PLFS %s", params$survey_year),
+    subtitle = "Orange = Above national average (higher unemployment)",
+    x = NULL,
+    y = "Unemployment Rate (%)"
+  ) +
+  theme_publication() +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+---
+
+# Gender Gap Analysis
+
+```{r gender-gap}
+#| label: gender-gap
+
+by_state_sex <- calc_all_indicators(design, by = c("State_name", "Sex"))
+
+# Calculate gender gap
+gender_gap <- dcast(by_state_sex, State_name ~ Sex, value.var = "lfpr")
+gender_gap[, gender_gap := Male - Female]
+setorder(gender_gap, -gender_gap)
+```
+
+```{r gender-gap-plot}
+#| label: gender-gap-plot
+#| fig-width: 10
+#| fig-height: 12
+#| fig-cap: "Gender Gap in LFPR (Male - Female)"
+
+ggplot(gender_gap[!is.na(State_name)], 
+       aes(x = reorder(State_name, -gender_gap), y = gender_gap)) +
+  geom_col(fill = "#8B0000", width = 0.7) +
+  geom_text(aes(label = sprintf("%.1f", gender_gap)), hjust = -0.2, size = 2.5) +
+  coord_flip() +
+  labs(
+    title = "Gender Gap in Labour Force Participation",
+    subtitle = sprintf("PLFS %s | Gap = Male LFPR - Female LFPR", params$survey_year),
+    x = NULL,
+    y = "Gender Gap (percentage points)"
+  ) +
+  theme_publication() +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+```{r gender-gap-table}
+#| label: gender-gap-table
+
+# Top 10 largest gaps
+kable(gender_gap[1:10, .(State_name, Male = round(Male, 1), Female = round(Female, 1), 
+                          `Gap (pp)` = round(gender_gap, 1))],
+      caption = "States with Largest Gender Gap in LFPR")
+```
+
+---
+
+# Rural-Urban Divide
+
+```{r rural-urban}
+#| label: rural-urban
+
+by_state_sector <- calc_all_indicators(design, by = c("State_name", "Sector"))
+
+# Rural-Urban gap
+ru_gap <- dcast(by_state_sector, State_name ~ Sector, value.var = "lfpr")
+ru_gap[, ru_gap := Rural - Urban]
+setorder(ru_gap, -ru_gap)
+```
+
+```{r ru-gap-plot}
+#| label: ru-gap-plot
+#| fig-width: 10
+#| fig-height: 10
+#| fig-cap: "Rural-Urban Gap in LFPR"
+
+ggplot(ru_gap[!is.na(State_name)], 
+       aes(x = reorder(State_name, ru_gap), y = ru_gap, 
+           fill = ru_gap > 0)) +
+  geom_col(width = 0.7) +
+  geom_hline(yintercept = 0, linewidth = 0.5) +
+  coord_flip() +
+  scale_fill_manual(values = c("TRUE" = "#6B8E23", "FALSE" = "#2E5B88"),
+                    labels = c("Urban > Rural", "Rural > Urban"),
+                    name = NULL) +
+  labs(
+    title = "Rural-Urban Gap in LFPR by State",
+    subtitle = sprintf("PLFS %s | Gap = Rural LFPR - Urban LFPR", params$survey_year),
+    x = NULL,
+    y = "Rural-Urban Gap (percentage points)"
+  ) +
+  theme_publication() +
+  theme(axis.text.y = element_text(size = 8),
+        legend.position = "bottom")
+```
+
+---
+
+# Regional Patterns
+
+```{r regional}
+#| label: regional
+
+# Load state codes with regions
+states <- load_state_codes()
+
+# Merge region info
+by_state_region <- merge(by_state, states[, .(state_code, region)], 
+                          by = "state_code", all.x = TRUE)
+
+# Regional averages (unweighted)
+regional <- by_state_region[!is.na(region), .(
+  lfpr = mean(lfpr, na.rm = TRUE),
+  wpr = mean(wpr, na.rm = TRUE),
+  ur = mean(ur, na.rm = TRUE),
+  n_states = .N
+), by = region]
+
+setorder(regional, -lfpr)
+```
+
+```{r regional-table}
+#| label: regional-table
+
+kable(regional[, .(Region = region, 
+                    `LFPR (%)` = round(lfpr, 1),
+                    `WPR (%)` = round(wpr, 1),
+                    `UR (%)` = round(ur, 1),
+                    `States` = n_states)],
+      caption = "Regional Average Labour Force Indicators")
+```
+
+```{r regional-plot}
+#| label: regional-plot
+#| fig-width: 8
+#| fig-height: 5
+
+ggplot(regional, aes(x = reorder(region, -lfpr), y = lfpr)) +
+  geom_col(fill = "#2E5B88", width = 0.6) +
+  geom_text(aes(label = sprintf("%.1f%%", lfpr)), vjust = -0.5, size = 3.5) +
+  scale_y_continuous(limits = c(0, max(regional$lfpr) * 1.15)) +
+  labs(
+    title = "Average LFPR by Region",
+    subtitle = sprintf("PLFS %s | Simple average across states in region", params$survey_year),
+    x = NULL,
+    y = "LFPR (%)"
+  ) +
+  theme_publication()
+```
+
+---
+
+# Summary Statistics Table
+
+```{r summary-table}
+#| label: summary-table
+
+summary_table <- by_state[!is.na(state_name), .(
+  State = state_name,
+  `LFPR (%)` = round(lfpr, 1),
+  `WPR (%)` = round(wpr, 1),
+  `UR (%)` = round(ur, 1),
+  `Sample (N)` = format(n, big.mark = ",")
+)]
+
+setorder(summary_table, State)
+
+kable(summary_table, 
+      caption = sprintf("Labour Force Indicators by State, PLFS %s", params$survey_year),
+      align = c("l", "r", "r", "r", "r"))
+```
+
+---
+
+# Export
+
+```{r export}
+#| label: export
+#| eval: false
+
+# Export state comparison table
+export_indicator_table(
+  by_state[!is.na(state_name)],
+  sprintf("state_comparison_%s", gsub("-", "_", params$survey_year)),
+  title = sprintf("State-wise Labour Force Indicators, PLFS %s", params$survey_year)
+)
+
+# Export gender gap table
+export_summary_table(
+  gender_gap[!is.na(State_name)],
+  sprintf("gender_gap_%s", gsub("-", "_", params$survey_year)),
+  title = "Gender Gap in LFPR by State"
+)
+```
+
+---
+
+*Report generated on `r Sys.Date()`*
