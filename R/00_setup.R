@@ -4,7 +4,7 @@
 # Run this script ONCE to install all required packages.
 # After running, you don't need to run it again unless you reinstall R.
 #
-# Usage: source("R/00_setup.R")
+# To run: source("R/00_setup.R")
 # ============================================================================
 
 cat("=== India Microdata Analysis Setup ===\n\n")
@@ -16,37 +16,35 @@ packages <- c(
   "arrow",         # Parquet file support (efficient storage)
   "readxl",        # Read Excel files (for Data_Layout.xlsx)
   "janitor",       # Clean column names
-  
 
   # Survey analysis
   "survey",        # Core survey statistics with proper weighting
   "srvyr",         # Tidyverse-friendly wrapper for survey package
-  
+
   # Econometrics
   "fixest",        # Fast fixed-effects regression
-  
+
   # Tables and output
   "modelsummary",  # Publication-quality regression tables
   "gt",            # Beautiful tables (HTML, Word, LaTeX)
   "flextable",     # Word-compatible tables
   "officer",       # Word document creation
-  
+
   # Visualization
   "ggplot2",       # Grammar of graphics
   "scales",        # Axis formatting
   "patchwork",     # Combine multiple plots
-  
-  # API and web
 
+  # API and web
   "httr2",         # Modern HTTP requests (for microdata.gov.in API)
   "jsonlite",      # JSON parsing
-  
+
   # Configuration and utilities
   "yaml",          # Read config.yaml
   "here",          # Project-relative paths
   "fs",            # File system operations
   "progress",      # Progress bars for long operations
-  
+
   # Reporting
   "quarto",        # Document generation
   "knitr",         # Knitting documents

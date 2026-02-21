@@ -4,7 +4,7 @@
 # Source this file at the start of every analysis script.
 # It loads the configuration and sets up the environment.
 #
-# Usage: source("R/01_config.R")
+# To run: source("R/01_config.R")
 # ============================================================================
 
 # Load required packages
@@ -58,12 +58,12 @@ get_path <- function(type) {
     tables = CONFIG$paths$tables,
     figures = CONFIG$paths$figures
   )
-  
+
   if (!type %in% names(paths)) {
-    stop(paste("Unknown path type:", type, 
+    stop(paste("Unknown path type:", type,
                "\nValid types:", paste(names(paths), collapse = ", ")))
   }
-  
+
   file.path(PROJECT_ROOT, paths[[type]])
 }
 
@@ -165,54 +165,54 @@ load_nco_codes <- function() {
 
 #' Detect variables in data using multiple naming patterns
 #' @param data data.table or data.frame
-#' @param var_type Type of variable to detect: "weight", "strata", "cluster", 
+#' @param var_type Type of variable to detect: "weight", "strata", "cluster",
 #'                 "state", "sector", "sex", "age", "status", "quarter", "subsample"
 #' @param patterns Custom patterns to try (optional)
 #' @return Character string: detected column name or NA
 #' @export
-detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "state", 
-                                                "sector", "sex", "age", "status", 
+detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "state",
+                                                "sector", "sex", "age", "status",
                                                 "quarter", "subsample"),
                             patterns = NULL) {
-  
+
   var_type <- match.arg(var_type)
   col_names <- names(data)
-  
+
   # Define default patterns for each variable type
   default_patterns <- list(
     weight = c("MULT", "Multiplier", "MLT", "multiplier", "Weight", "WGT",
-               "Subsample_Multiplier", "SUBSAMPLE_MULTIPLIER", 
+               "Subsample_Multiplier", "SUBSAMPLE_MULTIPLIER",
                "Sub_sample_wise_Multiplier", "Sub_Sample_Multiplier"),
-    
+
     strata = c("Stratum", "STRATUM", "stratum", "STR"),
-    
-    substrata = c("Sub_Stratum", "SUB_STRATUM", "SubStratum", "sub_stratum", 
+
+    substrata = c("Sub_Stratum", "SUB_STRATUM", "SubStratum", "sub_stratum",
                   "Sub_Round", "SUB_ROUND"),
-    
+
     cluster = c("FSU", "FSU_NO", "FSU_Serial_No", "Fsu_no", "PSU", "fsu",
                 "FSU_Serial", "First_Stage_Unit"),
-    
-    state = c("State", "STATE", "State_Code", "STATE_CODE", "state", 
+
+    state = c("State", "STATE", "State_Code", "STATE_CODE", "state",
               "State_Ut_Code", "ST"),
-    
+
     sector = c("Sector", "SECTOR", "sector", "Rural_Urban"),
-    
+
     sex = c("Sex", "SEX", "Gender", "sex", "Gender_Code"),
-    
+
     age = c("Age", "AGE", "age", "Person_Age", "Age_In_Years"),
-    
-    status_ps = c("Status_Code", "Principal_Status", "PS_Status", 
-                  "Principal_Activity_Status", "Usual_Principal_Activity_Status", 
+
+    status_ps = c("Status_Code", "Principal_Status", "PS_Status",
+                  "Principal_Activity_Status", "Usual_Principal_Activity_Status",
                   "PS", "ps_status", "UPS", "UPAS", "PAS"),
-    
-    status_cws = c("Current_Weekly_Status_CWS", "ACWS", "CWS_Status", 
+
+    status_cws = c("Current_Weekly_Status_CWS", "ACWS", "CWS_Status",
                    "Current_Weekly_Status", "CWS", "cws_status", "Current_Status"),
-    
+
     quarter = c("NO_QTR", "Quarter", "QTR", "QUARTER", "Qtr", "Visit"),
-    
+
     subsample = c("NSS", "NSC", "Sub_Sample", "SUB_SAMPLE", "Subsample", "SS")
   )
-  
+
   # Use custom patterns if provided, otherwise use defaults
   if (!is.null(patterns)) {
     search_patterns <- patterns
@@ -222,10 +222,10 @@ detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "s
       stop(paste("Unknown variable type:", var_type))
     }
   }
-  
+
   # Try exact matches first
   match <- intersect(col_names, search_patterns)[1]
-  
+
   # If no exact match, try partial matches
   if (is.na(match)) {
     for (pattern in search_patterns) {
@@ -236,7 +236,7 @@ detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "s
       }
     }
   }
-  
+
   return(ifelse(is.na(match), NA_character_, match))
 }
 
@@ -245,7 +245,7 @@ detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "s
 #' @param var_types Character vector of variable types
 #' @return Named character vector of detected column names
 #' @export
-detect_variables <- function(data, var_types = c("weight", "strata", "cluster", 
+detect_variables <- function(data, var_types = c("weight", "strata", "cluster",
                                                   "state", "sector", "sex", "age")) {
   result <- sapply(var_types, function(vt) detect_variable(data, vt))
   names(result) <- var_types
@@ -256,20 +256,20 @@ detect_variables <- function(data, var_types = c("weight", "strata", "cluster",
 #' @param data data.table or data.frame
 #' @param var_types Character vector of variable types to report
 #' @export
-report_detected_variables <- function(data, var_types = c("weight", "quarter", "strata", 
-                                                           "substrata", "state", "sector", 
+report_detected_variables <- function(data, var_types = c("weight", "quarter", "strata",
+                                                           "substrata", "state", "sector",
                                                            "cluster", "subsample")) {
   cat("=== Detected Variables ===\n")
-  
+
   detected <- detect_variables(data, var_types)
-  
+
   for (vt in var_types) {
     var_name <- detected[vt]
     status <- ifelse(is.na(var_name), "NOT FOUND", var_name)
     cat(sprintf("  %-15s: %s\n", paste0(toupper(vt), ":"), status))
   }
   cat("\n")
-  
+
   invisible(detected)
 }
 

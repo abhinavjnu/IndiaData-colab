@@ -9,18 +9,6 @@
 #   - Consistent color palettes
 #   - Easy export to PDF/PNG at correct dimensions
 #   - Pre-built plot functions for common visualizations
-#
-# Usage:
-#   source("R/01_config.R")
-#   source("R/10_viz_themes.R")
-#   
-#   # Apply theme to any ggplot
-#   ggplot(data, aes(x, y)) +
-#     geom_point() +
-#     theme_publication()
-#   
-#   # Save figure
-#   save_figure(p, "my_plot", width = 6, height = 4)
 # ============================================================================
 
 suppressPackageStartupMessages({
@@ -36,8 +24,7 @@ suppressPackageStartupMessages({
 # Professional color palette (colorblind-friendly)
 COLORS_MAIN <- c(
   "#2E5B88",  # Dark blue
-
-"#E57200",  # Orange
+  "#E57200",  # Orange
   "#6B8E23",  # Olive green
   "#8B0000",  # Dark red
   "#4B0082",  # Indigo
@@ -96,7 +83,7 @@ COLORS_EMPLOYMENT <- c(
 #' @param n Number of colors needed (for main palette)
 #' @return Character vector of hex colors
 get_colors <- function(palette = "main", n = NULL) {
-  
+
   colors <- switch(
     palette,
     "main" = COLORS_MAIN,
@@ -107,11 +94,11 @@ get_colors <- function(palette = "main", n = NULL) {
     "employment" = COLORS_EMPLOYMENT,
     COLORS_MAIN  # default
   )
-  
+
   if (!is.null(n) && n <= length(colors)) {
     colors <- colors[1:n]
   }
-  
+
   return(colors)
 }
 
@@ -126,10 +113,10 @@ get_colors <- function(palette = "main", n = NULL) {
 #' @param axis_lines Show axis lines: "both", "x", "y", "none"
 #' @return ggplot2 theme object
 theme_publication <- function(base_size = 11,
-                               base_family = "sans",
-                               grid = "major",
-                               axis_lines = "both") {
-  
+                              base_family = "sans",
+                              grid = "major",
+                              axis_lines = "both") {
+
   # Base theme
   theme_minimal(base_size = base_size, base_family = base_family) %+replace%
     theme(
@@ -151,7 +138,7 @@ theme_publication <- function(base_size = 11,
         color = "gray40",
         margin = margin(t = 10)
       ),
-      
+
       # Axis
       axis.title = element_text(size = base_size, face = "bold"),
       axis.title.x = element_text(margin = margin(t = 10)),
@@ -173,7 +160,7 @@ theme_publication <- function(base_size = 11,
       } else {
         element_blank()
       },
-      
+
       # Grid
       panel.grid.major = if (grid %in% c("major", "both")) {
         element_line(color = "gray90", linewidth = 0.3)
@@ -185,11 +172,11 @@ theme_publication <- function(base_size = 11,
       } else {
         element_blank()
       },
-      
+
       # Panel
       panel.background = element_rect(fill = "white", color = NA),
       panel.border = element_blank(),
-      
+
       # Legend
       legend.title = element_text(size = base_size * 0.9, face = "bold"),
       legend.text = element_text(size = base_size * 0.85),
@@ -200,7 +187,7 @@ theme_publication <- function(base_size = 11,
       legend.key.size = unit(0.8, "lines"),
       legend.background = element_rect(fill = "white", color = NA),
       legend.margin = margin(t = 5),
-      
+
       # Facets
       strip.text = element_text(
         size = base_size,
@@ -208,10 +195,10 @@ theme_publication <- function(base_size = 11,
         margin = margin(b = 5, t = 5)
       ),
       strip.background = element_rect(fill = "gray95", color = NA),
-      
+
       # Plot margins
       plot.margin = margin(15, 15, 15, 15),
-      
+
       # Complete theme
       complete = TRUE
     )
@@ -293,27 +280,27 @@ scale_y_comma <- function(...) {
 #' @param scale Scale factor (default: 1)
 #' @return Paths to created files (invisibly)
 save_figure <- function(plot,
-                         filename,
-                         output_dir = NULL,
-                         formats = c("pdf", "png"),
-                         width = 6,
-                         height = 4,
-                         dpi = 300,
-                         scale = 1) {
-  
+                        filename,
+                        output_dir = NULL,
+                        formats = c("pdf", "png"),
+                        width = 6,
+                        height = 4,
+                        dpi = 300,
+                        scale = 1) {
+
   if (is.null(output_dir)) {
     output_dir <- get_path("figures")
   }
-  
+
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
-  
+
   created_files <- character()
-  
+
   for (fmt in formats) {
     output_path <- file.path(output_dir, paste0(filename, ".", fmt))
-    
+
     tryCatch({
       ggsave(
         output_path,
@@ -324,15 +311,15 @@ save_figure <- function(plot,
         scale = scale,
         bg = "white"
       )
-      
+
       message(sprintf("Saved: %s", output_path))
       created_files <- c(created_files, output_path)
-      
+
     }, error = function(e) {
       warning(sprintf("Failed to save %s: %s", fmt, e$message))
     })
   }
-  
+
   invisible(created_files)
 }
 
@@ -342,13 +329,13 @@ save_figure <- function(plot,
 #' @param journal Preset: "single_column", "double_column", "full_page"
 #' @param ... Additional arguments to save_figure
 #' @return Paths to files
-save_figure_journal <- function(plot, 
-                                 filename,
-                                 journal = c("single_column", "double_column", "full_page"),
-                                 ...) {
-  
+save_figure_journal <- function(plot,
+                                filename,
+                                journal = c("single_column", "double_column", "full_page"),
+                                ...) {
+
   journal <- match.arg(journal)
-  
+
   # Common journal dimensions (in inches)
   dims <- switch(
     journal,
@@ -356,7 +343,7 @@ save_figure_journal <- function(plot,
     "double_column" = c(width = 7, height = 4),
     "full_page" = c(width = 7, height = 9)
   )
-  
+
   save_figure(plot, filename, width = dims["width"], height = dims["height"], ...)
 }
 
@@ -374,26 +361,26 @@ save_figure_journal <- function(plot,
 #' @param show_values Show value labels on bars
 #' @return ggplot object
 plot_indicator_bars <- function(data,
-                                 x_var,
-                                 y_var,
-                                 fill_var = NULL,
-                                 title = NULL,
-                                 y_label = NULL,
-                                 show_values = TRUE) {
-  
+                                x_var,
+                                y_var,
+                                fill_var = NULL,
+                                title = NULL,
+                                y_label = NULL,
+                                show_values = TRUE) {
+
   # Base plot
   if (is.null(fill_var)) {
-    p <- ggplot(data, aes(x = reorder(!!sym(x_var), -!!sym(y_var)), 
+    p <- ggplot(data, aes(x = reorder(!!sym(x_var), -!!sym(y_var)),
                           y = !!sym(y_var)))
     p <- p + geom_col(fill = COLORS_MAIN[1], width = 0.7)
   } else {
-    p <- ggplot(data, aes(x = !!sym(x_var), 
+    p <- ggplot(data, aes(x = !!sym(x_var),
                           y = !!sym(y_var),
                           fill = !!sym(fill_var)))
     p <- p + geom_col(position = position_dodge(width = 0.8), width = 0.7)
     p <- p + scale_fill_pub()
   }
-  
+
   # Add value labels
   if (show_values) {
     if (is.null(fill_var)) {
@@ -405,7 +392,7 @@ plot_indicator_bars <- function(data,
                          vjust = -0.5, size = 2.5)
     }
   }
-  
+
   # Labels and theme
   p <- p +
     labs(
@@ -417,7 +404,7 @@ plot_indicator_bars <- function(data,
     scale_y_percent() +
     theme_publication() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
+
   return(p)
 }
 
@@ -431,13 +418,13 @@ plot_indicator_bars <- function(data,
 #' @param show_points Show data points
 #' @return ggplot object
 plot_indicator_trend <- function(data,
-                                  x_var,
-                                  y_var,
-                                  group_var = NULL,
-                                  title = NULL,
-                                  y_label = NULL,
-                                  show_points = TRUE) {
-  
+                                 x_var,
+                                 y_var,
+                                 group_var = NULL,
+                                 title = NULL,
+                                 y_label = NULL,
+                                 show_points = TRUE) {
+
   if (is.null(group_var)) {
     p <- ggplot(data, aes(x = !!sym(x_var), y = !!sym(y_var)))
     p <- p + geom_line(color = COLORS_MAIN[1], linewidth = 1)
@@ -453,7 +440,7 @@ plot_indicator_trend <- function(data,
     }
     p <- p + scale_color_pub()
   }
-  
+
   p <- p +
     labs(
       title = title,
@@ -463,7 +450,7 @@ plot_indicator_trend <- function(data,
     ) +
     scale_y_percent() +
     theme_publication()
-  
+
   return(p)
 }
 
@@ -476,23 +463,23 @@ plot_indicator_trend <- function(data,
 #' @param highlight_top Highlight top N states
 #' @return ggplot object
 plot_horizontal_bars <- function(data,
-                                  x_var,
-                                  y_var,
-                                  title = NULL,
-                                  x_label = NULL,
-                                  highlight_top = NULL) {
-  
+                                 x_var,
+                                 y_var,
+                                 title = NULL,
+                                 x_label = NULL,
+                                 highlight_top = NULL) {
+
   # Sort by value
   data <- copy(data)
   setorderv(data, x_var, order = 1)
   data[, (y_var) := factor(get(y_var), levels = get(y_var))]
-  
+
   # Create fill variable for highlighting
   if (!is.null(highlight_top)) {
     n <- nrow(data)
-    data[, .highlight := c(rep("Other", n - highlight_top), 
+    data[, .highlight := c(rep("Other", n - highlight_top),
                            rep("Top", highlight_top))]
-    
+
     p <- ggplot(data, aes(x = !!sym(x_var), y = !!sym(y_var), fill = .highlight))
     p <- p + scale_fill_manual(values = c("Top" = COLORS_MAIN[1], "Other" = "gray70"),
                                guide = "none")
@@ -500,7 +487,7 @@ plot_horizontal_bars <- function(data,
     p <- ggplot(data, aes(x = !!sym(x_var), y = !!sym(y_var)))
     p <- p + geom_col(fill = COLORS_MAIN[1])
   }
-  
+
   p <- p +
     geom_col(width = 0.7) +
     geom_text(aes(label = round(!!sym(x_var), 1)),
@@ -513,7 +500,7 @@ plot_horizontal_bars <- function(data,
     scale_x_continuous(expand = expansion(mult = c(0, 0.15))) +
     theme_publication() +
     theme(panel.grid.major.y = element_blank())
-  
+
   return(p)
 }
 
@@ -526,18 +513,18 @@ plot_horizontal_bars <- function(data,
 #' @param title Plot title
 #' @return ggplot object
 plot_estimates_ci <- function(data,
-                               y_var,
-                               estimate_var,
-                               low_var,
-                               high_var,
-                               title = NULL,
-                               x_label = NULL) {
-  
+                              y_var,
+                              estimate_var,
+                              low_var,
+                              high_var,
+                              title = NULL,
+                              x_label = NULL) {
+
   # Sort by estimate
   data <- copy(data)
   setorderv(data, estimate_var, order = 1)
   data[, (y_var) := factor(get(y_var), levels = get(y_var))]
-  
+
   p <- ggplot(data, aes(x = !!sym(estimate_var), y = !!sym(y_var))) +
     geom_errorbarh(aes(xmin = !!sym(low_var), xmax = !!sym(high_var)),
                    height = 0.2, color = "gray50") +
@@ -549,7 +536,7 @@ plot_estimates_ci <- function(data,
     ) +
     theme_publication() +
     theme(panel.grid.major.y = element_blank())
-  
+
   return(p)
 }
 

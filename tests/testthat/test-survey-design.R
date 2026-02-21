@@ -2,6 +2,17 @@
 # test-survey-design.R - Tests for Survey Design Module
 # ============================================================================
 
+# Helper to source files from project root or test directory
+source_file <- function(path) {
+  if (file.exists(path)) {
+    source(path)
+  } else if (file.exists(file.path("../..", path))) {
+    source(file.path("../..", path))
+  } else {
+    stop(sprintf("Could not find %s. Working directory: %s", path, getwd()))
+  }
+}
+
 # Create minimal test data
 create_test_data <- function() {
   data.table(
@@ -19,11 +30,11 @@ create_test_data <- function() {
 }
 
 test_that("Weight calculation is correct", {
-  source("R/01_config.R")
-  source("R/03_survey_design.R")
-  
+  source_file("R/01_config.R")
+  source_file("R/03_survey_design.R")
+
   test_data <- create_test_data()
-  
+
   # Test weight formula: MULT / 100 for calendar year data
   # With NO_QTR: MULT / (NO_QTR * 100)
   expect_equal(test_data$MULT[1] / (test_data$NO_QTR[1] * 100), 1.0)
@@ -32,7 +43,7 @@ test_that("Weight calculation is correct", {
 
 test_that("Variable auto-detection works", {
   test_data <- create_test_data()
-  
+
   # Test that expected columns exist
   expect_true("MULT" %in% names(test_data))
   expect_true("NO_QTR" %in% names(test_data))
@@ -41,13 +52,13 @@ test_that("Variable auto-detection works", {
 })
 
 test_that("Survey design creation handles invalid inputs", {
-  source("R/01_config.R")
-  source("R/03_survey_design.R")
-  
+  source_file("R/01_config.R")
+  source_file("R/03_survey_design.R")
+
   # Empty data should error
   empty_data <- data.table()
   expect_error(create_survey_design(empty_data, weight_var = "MULT"))
-  
+
   # Missing weight variable should error
   bad_data <- data.table(x = 1:5)
   expect_error(create_survey_design(bad_data, weight_var = "MULT"))
