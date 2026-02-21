@@ -25,15 +25,24 @@ find_project_root <- function() {
   if (file.exists(here::here("config.yaml"))) {
     return(here::here())
   }
+
+  # Also check for config.yaml.example (for CI/fresh clones)
+  if (file.exists(here::here("config.yaml.example"))) {
+    return(here::here())
+  }
+
   # Fallback: search upward from current directory
   current <- getwd()
   while (current != dirname(current)) {
     if (file.exists(file.path(current, "config.yaml"))) {
       return(current)
     }
+    if (file.exists(file.path(current, "config.yaml.example"))) {
+      return(current)
+    }
     current <- dirname(current)
   }
-  stop("Could not find config.yaml. Are you in the IndiaData project?")
+  stop("Could not find config.yaml or config.yaml.example. Are you in the IndiaData project?")
 }
 
 # Set project root
@@ -41,7 +50,16 @@ PROJECT_ROOT <- find_project_root()
 setwd(PROJECT_ROOT)
 
 # Load config
-CONFIG <- yaml::read_yaml(file.path(PROJECT_ROOT, "config.yaml"))
+# Use example config if main config is missing (for CI/testing)
+config_file <- file.path(PROJECT_ROOT, "config.yaml")
+if (!file.exists(config_file)) {
+  config_file <- file.path(PROJECT_ROOT, "config.yaml.example")
+  if (file.exists(config_file)) {
+    message("Notice: Using config.yaml.example (config.yaml not found)")
+  }
+}
+
+CONFIG <- yaml::read_yaml(config_file)
 
 # ============================================================================
 # Path Helpers

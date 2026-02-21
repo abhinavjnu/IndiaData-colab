@@ -99,7 +99,7 @@ get_colors <- function(palette = "main", n = NULL) {
     colors <- colors[1:n]
   }
 
-  return(colors)
+  colors
 }
 
 # ============================================================================
@@ -405,7 +405,7 @@ plot_indicator_bars <- function(data,
     theme_publication() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-  return(p)
+  p
 }
 
 #' Line plot for time series indicators
@@ -451,7 +451,7 @@ plot_indicator_trend <- function(data,
     scale_y_percent() +
     theme_publication()
 
-  return(p)
+  p
 }
 
 #' Horizontal bar plot (for state comparisons)
@@ -501,7 +501,7 @@ plot_horizontal_bars <- function(data,
     theme_publication() +
     theme(panel.grid.major.y = element_blank())
 
-  return(p)
+  p
 }
 
 #' Dot plot with error bars (for estimates with CIs)
@@ -537,7 +537,7 @@ plot_estimates_ci <- function(data,
     theme_publication() +
     theme(panel.grid.major.y = element_blank())
 
-  return(p)
+  p
 }
 
 # ============================================================================

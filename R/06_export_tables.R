@@ -35,7 +35,7 @@ suppressPackageStartupMessages({
 # Default output settings
 .TABLE_DEFAULTS <- list(
   digits = 2,
-  stars = c('*' = 0.1, '**' = 0.05, '***' = 0.01),
+  stars = c("*" = 0.1, "**" = 0.05, "***" = 0.01),
   note_format = "Source: Authors' calculations using PLFS microdata.",
   font_size = 10,
   font_family = "Times New Roman"
