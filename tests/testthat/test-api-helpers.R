@@ -3,9 +3,20 @@
 # ============================================================================
 # These tests validate API helper functionality without making actual API calls
 
+# Helper to source files from project root or test directory
+source_file <- function(path) {
+  if (file.exists(path)) {
+    source(path)
+  } else if (file.exists(file.path("../..", path))) {
+    source(file.path("../..", path))
+  } else {
+    stop(sprintf("Could not find %s. Working directory: %s", path, getwd()))
+  }
+}
+
 test_that("get_api_config fails with placeholder key", {
-    source("R/01_config.R")
-    source("R/02_api_helpers.R")
+    source_file("R/01_config.R")
+    source_file("R/02_api_helpers.R")
 
     # Mock a config with placeholder key
     old_config <- CONFIG
@@ -19,8 +30,8 @@ test_that("get_api_config fails with placeholder key", {
 })
 
 test_that("build_api_url constructs correct URLs", {
-    source("R/01_config.R")
-    source("R/02_api_helpers.R")
+    source_file("R/01_config.R")
+    source_file("R/02_api_helpers.R")
 
     # Test basic URL construction (internal function)
     # We test by checking the config is loaded
@@ -33,8 +44,8 @@ test_that("build_api_url constructs correct URLs", {
 })
 
 test_that("API functions have correct signatures", {
-    source("R/01_config.R")
-    source("R/02_api_helpers.R")
+    source_file("R/01_config.R")
+    source_file("R/02_api_helpers.R")
 
     # Test that exported functions exist and have expected arguments
     expect_true(exists("test_api_connection"))
@@ -54,8 +65,8 @@ test_that("API functions have correct signatures", {
 })
 
 test_that("unzip_datafile validates file existence", {
-    source("R/01_config.R")
-    source("R/02_api_helpers.R")
+    source_file("R/01_config.R")
+    source_file("R/02_api_helpers.R")
 
     # Non-existent file should error
     expect_error(
@@ -65,8 +76,8 @@ test_that("unzip_datafile validates file existence", {
 })
 
 test_that("download_datafile handles missing destination", {
-    source("R/01_config.R")
-    source("R/02_api_helpers.R")
+    source_file("R/01_config.R")
+    source_file("R/02_api_helpers.R")
 
     # Test that function exists and has correct signature
     args <- names(formals(download_datafile))
