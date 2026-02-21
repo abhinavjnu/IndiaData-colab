@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "rmcp": {
-      "command": "C:\\Users\\91735\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\rmcp.exe",
+      "command": "rmcp",
       "args": ["start"],
       "env": {
         "R_HOME": "C:\\Program Files\\R\\R-4.5.2"
@@ -12,7 +12,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "D:\\Opencode\\Data Analysis\\IndiaData"
+        "."
       ]
     }
   }

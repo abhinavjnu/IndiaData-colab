@@ -7,20 +7,48 @@ Query parquet files using SQL directly.
 Usage:
   python duckdb_mcp_server.py
 
-This server provides SQL access to your PLFS parquet data.
+Configuration:
+  Set PLFS_DATA_PATH environment variable to point to your parquet file.
+  Default: data/processed/plfs_2024_persons.parquet
 """
 
 import json
 import sys
 import duckdb
+import os
 from pathlib import Path
 
 # Data paths
-DATA_DIR = Path(r"D:\Opencode\Data Analysis\IndiaData\data\processed")
-PARQUET_FILE = DATA_DIR / "plfs_2024_persons.parquet"
+DEFAULT_PATH = Path("data/processed/plfs_2024_persons.parquet")
+PARQUET_FILE = Path(os.getenv("PLFS_DATA_PATH", DEFAULT_PATH))
+
+def setup_database():
+    """Initialize DuckDB connection with security constraints."""
+    try:
+        # Use in-memory database
+        conn = duckdb.connect(database=":memory:")
+
+        # Check if file exists
+        if not PARQUET_FILE.exists():
+            print(f"Warning: Parquet file not found at {PARQUET_FILE}", file=sys.stderr)
+            # We can still run, but queries will fail if table not created
+            return conn
+
+        # Load parquet file into memory table 'plfs'
+        print(f"Loading data from {PARQUET_FILE}...", file=sys.stderr)
+        conn.execute(f"CREATE TABLE plfs AS SELECT * FROM '{PARQUET_FILE}'")
+
+        # Secure the connection: Disable external file access
+        conn.execute("SET enable_external_access=false")
+        print("Database secured: External file access disabled.", file=sys.stderr)
+
+        return conn
+    except Exception as e:
+        print(f"Error initializing database: {e}", file=sys.stderr)
+        sys.exit(1)
 
 # Initialize DuckDB connection
-conn = duckdb.connect()
+conn = setup_database()
 
 def handle_request(request):
     """Handle MCP JSON-RPC requests."""
@@ -39,7 +67,7 @@ def handle_request(request):
                 },
                 "serverInfo": {
                     "name": "duckdb-plfs",
-                    "version": "1.0.0"
+                    "version": "1.1.0"
                 }
             }
         }
@@ -52,7 +80,7 @@ def handle_request(request):
                 "tools": [
                     {
                         "name": "query_plfs",
-                        "description": "Execute SQL query on PLFS 2024 parquet data. Table alias: plfs",
+                        "description": "Execute SQL query on PLFS data. Table name: plfs",
                         "inputSchema": {
                             "type": "object",
                             "properties": {
@@ -96,9 +124,13 @@ def handle_request(request):
         try:
             if tool_name == "query_plfs":
                 sql = args.get("sql", "")
-                # Replace 'plfs' with actual file path
-                sql = sql.replace("plfs", f"'{PARQUET_FILE}'")
-                sql = sql.replace("FROM persons", f"FROM '{PARQUET_FILE}'")
+                # Security: sql is executed as-is, but external access is disabled
+                # so users cannot read/write files.
+                # Table 'plfs' is available.
+
+                # Check for basic injection attempts that might bypass logic (though strict mode handles most)
+                # But we rely on DuckDB security configuration.
+
                 result = conn.execute(sql).fetchdf()
                 return {
                     "jsonrpc": "2.0",
@@ -114,7 +146,7 @@ def handle_request(request):
                 }
             
             elif tool_name == "describe_plfs":
-                result = conn.execute(f"DESCRIBE SELECT * FROM '{PARQUET_FILE}'").fetchdf()
+                result = conn.execute("DESCRIBE plfs").fetchdf()
                 return {
                     "jsonrpc": "2.0",
                     "id": req_id,
@@ -129,8 +161,17 @@ def handle_request(request):
                 }
             
             elif tool_name == "sample_plfs":
-                limit = args.get("limit", 5)
-                result = conn.execute(f"SELECT * FROM '{PARQUET_FILE}' LIMIT {limit}").fetchdf()
+                try:
+                    limit = int(args.get("limit", 5))
+                except (ValueError, TypeError):
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": req_id,
+                        "error": {"code": -32602, "message": "Limit must be an integer"}
+                    }
+
+                # Use parameterized query for limit to be extra safe, though int cast handles it
+                result = conn.execute("SELECT * FROM plfs LIMIT ?", [limit]).fetchdf()
                 return {
                     "jsonrpc": "2.0",
                     "id": req_id,
@@ -170,6 +211,8 @@ def handle_request(request):
 
 def main():
     """Main loop - read JSON-RPC from stdin, write to stdout."""
+    # Ensure stdin is in non-blocking mode or handled correctly
+    # sys.stdin is an iterator which blocks until EOF or line
     for line in sys.stdin:
         line = line.strip()
         if not line:
