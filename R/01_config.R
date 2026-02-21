@@ -156,25 +156,25 @@ get_survey_settings <- function(survey = "plfs") {
 #' Load state codes lookup table
 #' @return data.table with state_code and state_name
 load_state_codes <- function() {
-  fread(codebook_path("state_codes.csv"))
+  data.table::fread(codebook_path("state_codes.csv"))
 }
 
 #' Load activity status codes lookup table
 #' @return data.table with status_code, status_description, category
 load_activity_status <- function() {
-  fread(codebook_path("activity_status.csv"))
+  data.table::fread(codebook_path("activity_status.csv"))
 }
 
 #' Load NIC (industry) codes lookup table
 #' @return data.table with nic_code and industry_name
 load_nic_codes <- function() {
-  fread(codebook_path("nic_2008.csv"))
+  data.table::fread(codebook_path("nic_2008.csv"))
 }
 
 #' Load NCO (occupation) codes lookup table
 #' @return data.table with nco_code and occupation_name
 load_nco_codes <- function() {
-  fread(codebook_path("nco_2015.csv"))
+  data.table::fread(codebook_path("nco_2015.csv"))
 }
 
 # ============================================================================
@@ -183,13 +183,12 @@ load_nco_codes <- function() {
 
 #' Detect variables in data using multiple naming patterns
 #' @param data data.table or data.frame
-#' @param var_type Type of variable to detect: "weight", "strata", "cluster",
-#'                 "state", "sector", "sex", "age", "status", "quarter", "subsample"
+#' @param var_type Type of variable to detect
 #' @param patterns Custom patterns to try (optional)
 #' @return Character string: detected column name or NA
 #' @export
-detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "state",
-                                                "sector", "sex", "age", "status",
+detect_variable <- function(data, var_type = c("weight", "strata", "substrata", "cluster",
+                                                "state", "sector", "sex", "age", "status",
                                                 "quarter", "subsample"),
                             patterns = NULL) {
 

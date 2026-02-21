@@ -68,11 +68,14 @@ test_that("classify_sector_broad works correctly", {
   source_file("R/05_codebook_utils.R")
 
   test_data <- data.table(
-    NIC = c(1, 10, 20, 45, 60) # Agriculture, Mining, Manufacturing, Services
+    NIC = c(1, 10, 20, 45, 60) # Agriculture, Mining, Manufacturing, Construction, Services
   )
   result <- classify_sector_broad(test_data, "NIC")
 
-  expect_equal(result$sector_broad, c("Primary", "Primary", "Secondary", "Tertiary", "Tertiary"))
+  # 01-03: Primary
+  # 05-43: Secondary (Mining 05-09, Mfg 10-33, Elec 35, Water 36-39, Const 41-43)
+  # 45+: Tertiary
+  expect_equal(result$sector_broad, c("Primary", "Secondary", "Secondary", "Tertiary", "Tertiary"))
 })
 
 test_that("codebook validation catches malformed files", {
@@ -81,10 +84,6 @@ test_that("codebook validation catches malformed files", {
 
   # Clear the cache to ensure we test fresh loading
   rm(list = ls(envir = .codebook_cache), envir = .codebook_cache)
-
-  # Create a temporary malformed codebook
-  temp_dir <- tempdir()
-  old_path <- CONFIG$paths$codebooks
 
   # Test that validation is in place by checking the function exists
   expect_true(exists(".load_codebook"))
