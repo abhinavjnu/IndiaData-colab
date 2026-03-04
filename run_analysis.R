@@ -38,7 +38,19 @@ cat("Step 1: Setting up file paths...\n")
 # Data files
 person_data_file <- raw_path("CPERV1.TXT")
 household_data_file <- raw_path("CHHV1.TXT")
-layout_file <- raw_path("Data_LayoutPLFS_Calendar_2024 (4).xlsx")
+
+# Auto-detect layout file (works across PLFS data versions)
+layout_candidates <- list.files(get_path("raw"), pattern = "Data_Layout.*\\.xlsx$",
+                                 full.names = TRUE, ignore.case = TRUE)
+if (length(layout_candidates) == 0) {
+  stop("No Data_Layout*.xlsx file found in ", get_path("raw"),
+       "\n  Please place the layout file in data/raw/")
+}
+layout_file <- layout_candidates[1]
+if (length(layout_candidates) > 1) {
+  cat("  Multiple layout files found, using:", basename(layout_file), "\n")
+  cat("  All candidates:", paste(basename(layout_candidates), collapse = ", "), "\n")
+}
 
 # Verify files exist
 stopifnot("Person data file not found" = file.exists(person_data_file))
@@ -110,36 +122,11 @@ cat("\n  All column names:\n")
 print(all_cols)
 cat("\n")
 
-# Try to auto-detect key variables
-detect_var <- function(patterns, cols) {
-  for (pat in patterns) {
-    matches <- cols[grepl(pat, cols, ignore.case = TRUE)]
-    if (length(matches) > 0) return(matches[1])
-  }
-  return(NA)
-}
-
-# Key variable detection
-state_var <- detect_var(c("^state$", "state_code", "state"), all_cols)
-sector_var <- detect_var(c("^sector$", "rural", "urban"), all_cols)
-sex_var <- detect_var(c("^sex$", "gender"), all_cols)
-age_var <- detect_var(c("^age$", "person_age"), all_cols)
-weight_var <- detect_var(c("mult", "multiplier", "weight", "wgt"), all_cols)
-qtr_var <- detect_var(c("no_qtr", "quarter", "qtr"), all_cols)
-status_var <- detect_var(c("principal", "status", "activity", "ps_", "ups"), all_cols)
-fsu_var <- detect_var(c("fsu", "psu", "first_stage"), all_cols)
-stratum_var <- detect_var(c("stratum", "strat"), all_cols)
-
-cat("  Detected variables:\n")
-cat("    State:", ifelse(is.na(state_var), "NOT FOUND", state_var), "\n")
-cat("    Sector:", ifelse(is.na(sector_var), "NOT FOUND", sector_var), "\n")
-cat("    Sex:", ifelse(is.na(sex_var), "NOT FOUND", sex_var), "\n")
-cat("    Age:", ifelse(is.na(age_var), "NOT FOUND", age_var), "\n")
-cat("    Weight/Mult:", ifelse(is.na(weight_var), "NOT FOUND", weight_var), "\n")
-cat("    Quarter:", ifelse(is.na(qtr_var), "NOT FOUND", qtr_var), "\n")
-cat("    Activity Status:", ifelse(is.na(status_var), "NOT FOUND", status_var), "\n")
-cat("    FSU (cluster):", ifelse(is.na(fsu_var), "NOT FOUND", fsu_var), "\n")
-cat("    Stratum:", ifelse(is.na(stratum_var), "NOT FOUND", stratum_var), "\n\n")
+# Use centralized variable detection from R/01_config.R
+report_detected_variables(persons, c(
+  "weight", "quarter", "strata", "substrata",
+  "state", "sector", "sex", "age", "cluster", "subsample"
+))
 
 # ============================================================================
 # Step 5: Data Validation & Summary

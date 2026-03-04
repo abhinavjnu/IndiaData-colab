@@ -79,7 +79,6 @@ IndiaData/
 │   ├── 01_config.R          # Configuration loader
 │   ├── 02_api_helpers.R     # microdata.gov.in API
 │   ├── 02_read_microdata.R  # Fixed-width file parser
-  │   ├── 02_api_helpers.R     # microdata.gov.in API
 │   ├── 03_survey_design.R   # Survey design setup
 │   ├── 04_plfs_indicators.R # LFPR, WPR, UR functions
 │   ├── 05_codebook_utils.R  # Code lookup utilities

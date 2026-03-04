@@ -19,29 +19,43 @@ suppressPackageStartupMessages({
 # Load Configuration
 # ============================================================================
 
-# Find project root (where config.yaml is)
+# Find project root (where config.yaml or config.yaml.example lives)
 find_project_root <- function() {
   # Try 'here' package first (works with .Rproj)
-  if (file.exists(here::here("config.yaml"))) {
-    return(here::here())
+  root <- here::here()
+  if (file.exists(file.path(root, "config.yaml")) ||
+      file.exists(file.path(root, "config.yaml.example"))) {
+    return(root)
   }
   # Fallback: search upward from current directory
   current <- getwd()
   while (current != dirname(current)) {
-    if (file.exists(file.path(current, "config.yaml"))) {
+    if (file.exists(file.path(current, "config.yaml")) ||
+        file.exists(file.path(current, "config.yaml.example"))) {
       return(current)
     }
     current <- dirname(current)
   }
-  stop("Could not find config.yaml. Are you in the IndiaData project?")
+  stop("Could not find config.yaml or config.yaml.example. Are you in the IndiaData project?")
 }
 
 # Set project root
 PROJECT_ROOT <- find_project_root()
 setwd(PROJECT_ROOT)
 
-# Load config
-CONFIG <- yaml::read_yaml(file.path(PROJECT_ROOT, "config.yaml"))
+# Load config - fall back to config.yaml.example if config.yaml is missing
+.config_file <- file.path(PROJECT_ROOT, "config.yaml")
+if (!file.exists(.config_file)) {
+  .config_example <- file.path(PROJECT_ROOT, "config.yaml.example")
+  if (file.exists(.config_example)) {
+    message("Note: config.yaml not found, using config.yaml.example as fallback.")
+    message("  Copy config.yaml.example to config.yaml and add your API key for full functionality.")
+    .config_file <- .config_example
+  } else {
+    stop("Neither config.yaml nor config.yaml.example found in project root.")
+  }
+}
+CONFIG <- yaml::read_yaml(.config_file)
 
 # ============================================================================
 # Path Helpers
@@ -170,19 +184,26 @@ load_nco_codes <- function() {
 #' @param patterns Custom patterns to try (optional)
 #' @return Character string: detected column name or NA
 #' @export
-detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "state", 
-                                                "sector", "sex", "age", "status", 
+detect_variable <- function(data, var_type = c("weight", "strata", "substrata", "cluster",
+                                                "state", "sector", "sex", "age",
+                                                "status", "status_ps", "status_cws",
                                                 "quarter", "subsample"),
                             patterns = NULL) {
   
   var_type <- match.arg(var_type)
-  col_names <- names(data)
+
+  # Get column names - handle both data.table and srvyr design objects
+  if (inherits(data, "tbl_svy")) {
+    col_names <- colnames(data)
+  } else {
+    col_names <- names(data)
+  }
   
   # Define default patterns for each variable type
   default_patterns <- list(
-    weight = c("MULT", "Multiplier", "MLT", "multiplier", "Weight", "WGT",
-               "Subsample_Multiplier", "SUBSAMPLE_MULTIPLIER", 
-               "Sub_sample_wise_Multiplier", "Sub_Sample_Multiplier"),
+    weight = c("Subsample_Multiplier", "SUBSAMPLE_MULTIPLIER", 
+               "Sub_sample_wise_Multiplier", "Sub_Sample_Multiplier",
+               "MULT", "Multiplier", "MLT", "multiplier", "Weight", "WGT"),
     
     strata = c("Stratum", "STRATUM", "stratum", "STR"),
     
@@ -192,8 +213,8 @@ detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "s
     cluster = c("FSU", "FSU_NO", "FSU_Serial_No", "Fsu_no", "PSU", "fsu",
                 "FSU_Serial", "First_Stage_Unit"),
     
-    state = c("State", "STATE", "State_Code", "STATE_CODE", "state", 
-              "State_Ut_Code", "ST"),
+    state = c("State_UT_Code", "STATE_UT_CODE", "State", "STATE", 
+              "State_Code", "STATE_CODE", "state", "State_Ut_Code", "ST"),
     
     sector = c("Sector", "SECTOR", "sector", "Rural_Urban"),
     
@@ -201,16 +222,24 @@ detect_variable <- function(data, var_type = c("weight", "strata", "cluster", "s
     
     age = c("Age", "AGE", "age", "Person_Age", "Age_In_Years"),
     
-    status_ps = c("Status_Code", "Principal_Status", "PS_Status", 
+    # Principal status — exact CSV names first, then abbreviations
+    status_ps = c("Principal_Status_Code", "PRINCIPAL_STATUS_CODE",
+                  "Status_Code", "Principal_Status", "PS_Status", 
                   "Principal_Activity_Status", "Usual_Principal_Activity_Status", 
-                  "PS", "ps_status", "UPS", "UPAS", "PAS"),
+                  "ps_status", "UPAS"),
     
-    status_cws = c("Current_Weekly_Status_CWS", "ACWS", "CWS_Status", 
-                   "Current_Weekly_Status", "CWS", "cws_status", "Current_Status"),
+    # CWS status — exact CSV names first
+    status_cws = c("CWS_Status_Code", "CWS_STATUS_CODE",
+                   "Current_Weekly_Status_CWS", "ACWS", "CWS_Status", 
+                   "Current_Weekly_Status", "cws_status", "Current_Status"),
+    
+    status = c("Status_Code", "Principal_Status_Code", 
+               "Current_Weekly_Status_CWS", "CWS_Status_Code",
+               "Current_Weekly_Status", "Activity_Status"),
     
     quarter = c("NO_QTR", "Quarter", "QTR", "QUARTER", "Qtr", "Visit"),
     
-    subsample = c("NSS", "NSC", "Sub_Sample", "SUB_SAMPLE", "Subsample", "SS")
+    subsample = c("Sub_Sample", "SUB_SAMPLE", "Subsample", "NSS", "NSC", "SS")
   )
   
   # Use custom patterns if provided, otherwise use defaults

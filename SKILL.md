@@ -19,15 +19,16 @@ Use this skill when the user asks about:
 ## Project Location
 
 ```
-/media/abhinav/Data/Opencode/Data Analysis/IndiaData/
+# Use the repository root (wherever you cloned it)
+# e.g., ~/IndiaData or /path/to/IndiaData-colab
 ```
 
 ## Technology Stack
 
 | Component | Technology |
 |-----------|------------|
-| Language | R 4.5.2 |
-| R Path | `"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"` (Windows) or `Rscript` (Linux) |
+| Language | R 4.0+ |
+| R Path | `Rscript` (must be on PATH; see your OS-specific R installation) |
 | Data Format | Fixed-width TXT → Parquet |
 | Survey Analysis | `srvyr` package (tidyverse-style survey) |
 | Data Manipulation | `data.table` |
@@ -592,12 +593,9 @@ The `create_plfs_design()` function handles this automatically.
 ### R Execution
 
 ```bash
-# Run R script from command line
-cd "/media/abhinav/Data/Opencode/Data Analysis/IndiaData"
+# Run R script from command line (any OS)
+cd /path/to/IndiaData-colab
 Rscript run_analysis.R
-
-# Or specify full path
-"C:\Program Files\R\R-4.5.2\bin\Rscript.exe" run_analysis.R
 ```
 
 ## Testing

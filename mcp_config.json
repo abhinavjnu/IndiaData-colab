@@ -1,22 +1,24 @@
 {
   "mcpServers": {
     "rmcp-statistics": {
-      "command": "C:\\Users\\91735\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\rmcp.exe",
-      "args": ["start"],
-      "env": {
-        "R_HOME": "C:\\Program Files\\R\\R-4.5.2"
-      }
+      "command": "rmcp",
+      "args": [
+        "start"
+      ],
+      "env": {}
     },
     "duckdb-plfs": {
       "command": "python",
-      "args": ["D:\\Opencode\\Data Analysis\\IndiaData\\duckdb_mcp_server.py"]
+      "args": [
+        "duckdb_mcp_server.py"
+      ]
     },
     "filesystem": {
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "D:\\Opencode\\Data Analysis\\IndiaData"
+        "."
       ]
     }
   }

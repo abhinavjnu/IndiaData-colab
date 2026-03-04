@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         r-version: ['4.3', '4.4']
 
     steps:
@@ -37,6 +37,11 @@ jobs:
           source("R/00_setup.R")
         shell: Rscript {0}
       
+      - name: Set up config.yaml for tests
+        run: |
+          cp config.yaml.example config.yaml
+        shell: bash
+
       - name: Run tests
         run: |
           testthat::test_dir("tests/testthat", reporter = "summary")

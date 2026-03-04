@@ -45,19 +45,40 @@ suppressPackageStartupMessages({
 # ============================================================================
 
 # Standard PLFS activity status codes
-EMPLOYED_CODES <- c(11, 12, 21, 31, 41, 42, 51) # Working (42 = casual labour in public works, variant)
-UNEMPLOYED_CODES <- c(61, 62) # 61=Seeking work, 62=Available for work
-NILF_CODES <- c(71, 72, 81, 82, 91, 92, 93, 94, 95, 97, 98) # Not in labour force
+# Reference: PLFS Annual Report & Instruction Manual Vol-II
+#   11-12 = Self-employed (own account worker, employer)
+#   21    = Self-employed (unpaid family helper)
+#   31    = Regular wage/salaried employee
+#   41    = Casual labour (in other types of work)
+#   42    = Casual labour (in public works) — rare variant
+#   51    = Contract worker
+EMPLOYED_CODES <- c(11, 12, 21, 31, 41, 42, 51)
 
-# Some classifications include marginal workers
-EMPLOYED_CODES_BROAD <- c(11, 12, 21, 31, 41, 42, 51, 72, 82) # Including marginal
+# Unemployed: seeking/available for work
+#   81 = Sought work or did not seek but was available for work (seeking)
+#   82 = Sought work or did not seek but was available for work (available)
+UNEMPLOYED_CODES <- c(81, 82)
+
+# Not in Labour Force
+#   61-62 = Attended educational institution
+#   71-72 = Attended domestic duties only
+#   91    = Rentier, pensioner, remittance recipient
+#   92    = Not able to work due to disability
+#   93    = Beggars, vagrants
+#   94    = Prostitution
+#   95    = Others
+#   97-99 = Children (0-4), not available, etc.
+NILF_CODES <- c(61, 62, 71, 72, 91, 92, 93, 94, 95, 97, 98, 99)
 
 #' Add labour force classification variables to data
 #' @param data data.table or srvyr design
-#' @param status_var Name of the activity status variable
-#' @param approach "ps" for principal status or "cws" for current weekly status
+#' @param status_var Name of the activity status variable (for PS/CWS)
+#' @param subsidiary_var Name of subsidiary status variable (auto-detected for PS+SS)
+#' @param approach "ps" for principal status only, "psss" for principal + subsidiary
+#'   (official MoSPI usual status), or "cws" for current weekly status
 #' @return Data with added classification variables
-add_lf_classification <- function(data, status_var = NULL, approach = c("ps", "cws")) {
+add_lf_classification <- function(data, status_var = NULL, subsidiary_var = NULL,
+                                   approach = c("ps", "psss", "cws")) {
   approach <- match.arg(approach)
 
   # Get column names - handle both data.table and srvyr design
@@ -69,11 +90,10 @@ add_lf_classification <- function(data, status_var = NULL, approach = c("ps", "c
 
   # Auto-detect status variable if not provided
   if (is.null(status_var)) {
-    var_type <- if (approach == "ps") "status_ps" else "status_cws"
+    var_type <- if (approach == "cws") "status_cws" else "status_ps"
     status_var <- detect_variable(data, var_type)
 
     if (is.na(status_var)) {
-      # Try generic status variable
       status_var <- detect_variable(data, "status")
     }
 
@@ -87,36 +107,87 @@ add_lf_classification <- function(data, status_var = NULL, approach = c("ps", "c
     message(sprintf("Using status variable: %s", status_var))
   }
 
+  # For PS+SS approach, also detect subsidiary status variable
+  if (approach == "psss" && is.null(subsidiary_var)) {
+    ss_patterns <- c("Subsidiary_Status_Code", "Subsidiary_Status",
+                     "subsidiary_status", "SS_Status", "Sub_Status")
+    for (p in ss_patterns) {
+      m <- col_names[grepl(paste0("^", p, "$"), col_names, ignore.case = TRUE)]
+      if (length(m) > 0) { subsidiary_var <- m[1]; break }
+    }
+    if (is.null(subsidiary_var)) {
+      # Fallback: try partial match
+      m <- col_names[grepl("subsidiary.*status", col_names, ignore.case = TRUE)]
+      if (length(m) > 0) subsidiary_var <- m[1]
+    }
+    if (!is.null(subsidiary_var)) {
+      message(sprintf("Using subsidiary status variable: %s", subsidiary_var))
+    } else {
+      warning("PS+SS approach requested but no subsidiary status variable found. Falling back to PS-only.")
+      approach <- "ps"
+    }
+  }
+
   # Check if it's a survey design or data.table
   is_design <- inherits(data, "tbl_svy")
 
   if (is_design) {
-    # For survey design, use mutate
-    data <- data |>
-      mutate(
-        # Get status code
-        .status_code = as.numeric(!!sym(status_var)),
-
-        # Classification
-        is_employed = .status_code %in% !!EMPLOYED_CODES,
-        is_unemployed = .status_code %in% !!UNEMPLOYED_CODES,
-        is_in_lf = is_employed | is_unemployed,
-        is_nilf = !is_in_lf,
-
-        # Employment type (for employed persons)
-        employment_type = case_when(
-          .status_code %in% c(11, 12, 21) ~ "Self-employed",
-          .status_code == 31 ~ "Regular wage/salaried",
-          .status_code %in% c(41, 51) ~ "Casual labour",
-          TRUE ~ NA_character_
+    if (approach == "psss" && !is.null(subsidiary_var)) {
+      # PS+SS approach: combine Principal and Subsidiary status
+      # Person is employed if EITHER principal or subsidiary status is employed
+      # Person is unemployed if principal is unemployed AND subsidiary is NOT employed
+      data <- data |>
+        mutate(
+          .status_code = as.numeric(!!sym(status_var)),
+          .ss_code = as.numeric(!!sym(subsidiary_var)),
+          is_employed = .status_code %in% !!EMPLOYED_CODES |
+            (!is.na(.ss_code) & .ss_code %in% !!EMPLOYED_CODES),
+          is_unemployed = .status_code %in% !!UNEMPLOYED_CODES &
+            !((!is.na(.ss_code)) & .ss_code %in% !!EMPLOYED_CODES),
+          is_in_lf = is_employed | is_unemployed,
+          is_nilf = !is_in_lf,
+          employment_type = case_when(
+            .status_code %in% c(11, 12, 21) ~ "Self-employed",
+            !is.na(.ss_code) & .ss_code %in% c(11, 12, 21) & !(.status_code %in% EMPLOYED_CODES) ~ "Self-employed",
+            .status_code == 31 ~ "Regular wage/salaried",
+            !is.na(.ss_code) & .ss_code == 31 & !(.status_code %in% EMPLOYED_CODES) ~ "Regular wage/salaried",
+            .status_code %in% c(41, 51) ~ "Casual labour",
+            !is.na(.ss_code) & .ss_code %in% c(41, 51) & !(.status_code %in% EMPLOYED_CODES) ~ "Casual labour",
+            TRUE ~ NA_character_
+          )
         )
-      )
+    } else {
+      # PS-only or CWS approach: use single status variable
+      data <- data |>
+        mutate(
+          .status_code = as.numeric(!!sym(status_var)),
+          is_employed = .status_code %in% !!EMPLOYED_CODES,
+          is_unemployed = .status_code %in% !!UNEMPLOYED_CODES,
+          is_in_lf = is_employed | is_unemployed,
+          is_nilf = !is_in_lf,
+          employment_type = case_when(
+            .status_code %in% c(11, 12, 21) ~ "Self-employed",
+            .status_code == 31 ~ "Regular wage/salaried",
+            .status_code %in% c(41, 51) ~ "Casual labour",
+            TRUE ~ NA_character_
+          )
+        )
+    }
   } else {
-    # For data.table
     data <- copy(data)
     data[, .status_code := as.numeric(get(status_var))]
-    data[, is_employed := .status_code %in% EMPLOYED_CODES]
-    data[, is_unemployed := .status_code %in% UNEMPLOYED_CODES]
+    
+    if (approach == "psss" && !is.null(subsidiary_var)) {
+      data[, .ss_code := as.numeric(get(subsidiary_var))]
+      data[, is_employed := .status_code %in% EMPLOYED_CODES |
+             (!is.na(.ss_code) & .ss_code %in% EMPLOYED_CODES)]
+      data[, is_unemployed := .status_code %in% UNEMPLOYED_CODES &
+             !((!is.na(.ss_code)) & .ss_code %in% EMPLOYED_CODES)]
+    } else {
+      data[, is_employed := .status_code %in% EMPLOYED_CODES]
+      data[, is_unemployed := .status_code %in% UNEMPLOYED_CODES]
+    }
+    
     data[, is_in_lf := is_employed | is_unemployed]
     data[, is_nilf := !is_in_lf]
 
@@ -145,7 +216,7 @@ add_lf_classification <- function(data, status_var = NULL, approach = c("ps", "c
 calc_lfpr <- function(design,
                       by = NULL,
                       status_var = NULL,
-                      approach = c("ps", "cws"),
+                      approach = c("ps", "psss", "cws"),
                       age_filter = c(15, 99)) {
   approach <- match.arg(approach)
 
@@ -157,7 +228,7 @@ calc_lfpr <- function(design,
   )
 
   # Add classification
-  design <- add_lf_classification(design, status_var, approach)
+  design <- add_lf_classification(design, status_var = status_var, approach = approach)
 
   # Apply age filter if age variable exists
   age_vars <- c("Age", "AGE", "age", "Person_Age")
@@ -213,12 +284,12 @@ calc_lfpr <- function(design,
 calc_wpr <- function(design,
                      by = NULL,
                      status_var = NULL,
-                     approach = c("ps", "cws"),
+                     approach = c("ps", "psss", "cws"),
                      age_filter = c(15, 99)) {
   approach <- match.arg(approach)
 
   # Add classification
-  design <- add_lf_classification(design, status_var, approach)
+  design <- add_lf_classification(design, status_var = status_var, approach = approach)
 
   # Apply age filter
   age_vars <- c("Age", "AGE", "age", "Person_Age")
@@ -268,12 +339,12 @@ calc_wpr <- function(design,
 calc_unemployment_rate <- function(design,
                                    by = NULL,
                                    status_var = NULL,
-                                   approach = c("ps", "cws"),
+                                   approach = c("ps", "psss", "cws"),
                                    age_filter = c(15, 99)) {
   approach <- match.arg(approach)
 
   # Add classification
-  design <- add_lf_classification(design, status_var, approach)
+  design <- add_lf_classification(design, status_var = status_var, approach = approach)
 
   # Apply age filter
   age_vars <- c("Age", "AGE", "age", "Person_Age")
@@ -329,11 +400,11 @@ calc_unemployment_rate <- function(design,
 calc_employment_distribution <- function(design,
                                          by = NULL,
                                          status_var = NULL,
-                                         approach = c("ps", "cws")) {
+                                         approach = c("ps", "psss", "cws")) {
   approach <- match.arg(approach)
 
   # Add classification
-  design <- add_lf_classification(design, status_var, approach)
+  design <- add_lf_classification(design, status_var = status_var, approach = approach)
 
   # Filter to employed only
   design <- design |> filter(is_employed)
@@ -433,7 +504,7 @@ calc_activity_distribution <- function(design, by = NULL, status_var = NULL) {
 #' @return data.table with LFPR, WPR, UR
 calc_all_indicators <- function(design,
                                 by = NULL,
-                                approach = c("ps", "cws"),
+                                approach = c("ps", "psss", "cws"),
                                 age_filter = c(15, 99)) {
   approach <- match.arg(approach)
 
@@ -475,7 +546,7 @@ calc_all_indicators <- function(design,
 #' @param design srvyr survey design object
 #' @param approach "ps" or "cws"
 #' @return data.table with indicators by Male/Female
-calc_indicators_by_sex <- function(design, approach = c("ps", "cws")) {
+calc_indicators_by_sex <- function(design, approach = c("ps", "psss", "cws")) {
   approach <- match.arg(approach)
 
   # Find sex variable
@@ -501,7 +572,7 @@ calc_indicators_by_sex <- function(design, approach = c("ps", "cws")) {
 #' @param add_names Add state names from codebook
 #' @return data.table with indicators by state
 calc_indicators_by_state <- function(design,
-                                     approach = c("ps", "cws"),
+                                     approach = c("ps", "psss", "cws"),
                                      add_names = TRUE) {
   approach <- match.arg(approach)
 

@@ -3,27 +3,51 @@
 ## Overview
 
 This guide helps you connect MCP servers for Indian survey data analysis.
+All paths are cross-platform and work on **Windows, Linux, and macOS**.
 
-## Installed MCP Servers
+## Available MCP Servers
 
 | Server | Purpose | Status |
 |--------|---------|--------|
-| **RMCP** | R statistical analysis (52 tools) | ✅ Installed |
-| **DuckDB** | SQL queries on parquet files | ✅ Installed |
+| **RMCP** | R statistical analysis (52 tools) | Install separately |
+| **DuckDB** | SQL queries on parquet files | ✅ Included in repo |
 | **Filesystem** | File read/write operations | ✅ Available via npx |
+
+---
+
+## Prerequisites
+
+| Tool | Installation |
+|------|-------------|
+| **Python 3.8+** | [python.org](https://python.org) or your OS package manager |
+| **R 4.0+** | [r-project.org](https://www.r-project.org/) |
+| **Node.js 18+** | [nodejs.org](https://nodejs.org) |
+| **DuckDB (Python)** | `pip install duckdb` |
+| **RMCP** | `pip install rmcp` |
 
 ---
 
 ## Quick Test
 
-### Test RMCP
-```powershell
-& "C:\Users\91735\AppData\Local\Python\pythoncore-3.14-64\Scripts\rmcp.exe" list-capabilities
+### Test DuckDB
+
+```bash
+# Any OS
+python -c "import duckdb; print('DuckDB OK:', duckdb.__version__)"
 ```
 
-### Test DuckDB
-```powershell
-python -c "import duckdb; print(duckdb.connect().execute(\"SELECT COUNT(*) FROM 'D:/Opencode/Data Analysis/IndiaData/data/processed/plfs_2024_persons.parquet'\").fetchone())"
+### Test RMCP
+
+```bash
+# Any OS (rmcp must be on PATH)
+rmcp list-capabilities
+```
+
+### Test the DuckDB MCP Server
+
+```bash
+# From the project root
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | python duckdb_mcp_server.py
 ```
 
 ---
@@ -32,22 +56,28 @@ python -c "import duckdb; print(duckdb.connect().execute(\"SELECT COUNT(*) FROM 
 
 ### For Claude Desktop
 
-Copy `mcp_config.json` to:
-```
-%APPDATA%\Claude\claude_desktop_config.json
+**macOS:**
+```bash
+cp mcp_config_claude_desktop.json ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```
 
-Or manually:
+**Linux:**
+```bash
+mkdir -p ~/.config/claude
+cp mcp_config_claude_desktop.json ~/.config/claude/claude_desktop_config.json
+```
+
+**Windows:**
 ```powershell
 mkdir "$env:APPDATA\Claude" -Force
-copy "D:\Opencode\Data Analysis\IndiaData\mcp_config.json" "$env:APPDATA\Claude\claude_desktop_config.json"
+copy mcp_config_claude_desktop.json "$env:APPDATA\Claude\claude_desktop_config.json"
 ```
 
 ### For Cursor
 
-Add to `.cursor/mcp.json` in your project or globally:
-```powershell
-copy "D:\Opencode\Data Analysis\IndiaData\mcp_config.json" "$env:USERPROFILE\.cursor\mcp.json"
+```bash
+# From project root
+cp mcp_config.json .cursor/mcp.json
 ```
 
 ### For VS Code + Continue
@@ -58,7 +88,7 @@ Add to Continue config (`~/.continue/config.json`):
   "mcpServers": [
     {
       "name": "rmcp",
-      "command": "C:\\Users\\91735\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\rmcp.exe",
+      "command": "rmcp",
       "args": ["start"]
     }
   ]
@@ -88,17 +118,19 @@ Add to Continue config (`~/.continue/config.json`):
 
 **Custom SQL server** for querying your parquet data.
 
+The server auto-detects parquet files in `data/processed/`. You can override the data directory with the `INDADATA_DATA_DIR` environment variable.
+
 **Tools:**
 | Tool | Description |
 |------|-------------|
-| `query_plfs` | Run SQL queries (use `plfs` as table name) |
+| `query_plfs` | Run SQL queries (use `plfs` as table name; SELECT only) |
 | `describe_plfs` | Get column names and types |
 | `sample_plfs` | Get sample rows |
 
 **Example queries:**
 ```sql
 -- Unemployment rate by education
-SELECT 
+SELECT
   General_Educaion_Level,
   COUNT(*) as n,
   SUM(CASE WHEN Current_Weekly_Status_CWS IN (61,62) THEN 1 ELSE 0 END) as unemployed,
@@ -122,76 +154,89 @@ ORDER BY General_Educaion_Level
 
 ## Full MCP Config
 
+The config files use portable commands (`rmcp`, `python`, `npx`) that should be on your PATH:
+
 ```json
 {
   "mcpServers": {
     "rmcp-statistics": {
-      "command": "C:\\Users\\91735\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\rmcp.exe",
+      "command": "rmcp",
       "args": ["start"],
-      "env": {
-        "R_HOME": "C:\\Program Files\\R\\R-4.5.2"
-      }
+      "env": {}
     },
     "duckdb-plfs": {
       "command": "python",
-      "args": ["D:\\Opencode\\Data Analysis\\IndiaData\\duckdb_mcp_server.py"]
+      "args": ["duckdb_mcp_server.py"]
     },
     "filesystem": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "D:\\Opencode\\Data Analysis\\IndiaData"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
     }
   }
 }
 ```
+
+> **Note:** If `rmcp` or `python` are not on your PATH, replace the command with the full path to the executable for your OS.
+
+---
+
+## Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `INDADATA_DATA_DIR` | Override data directory for DuckDB server | `data/processed/` relative to script |
+| `R_HOME` | R installation path (needed by RMCP on some systems) | Auto-detected |
 
 ---
 
 ## Troubleshooting
 
 ### RMCP not found
-```powershell
-# Add to PATH
-$env:PATH += ";C:\Users\91735\AppData\Local\Python\pythoncore-3.14-64\Scripts"
 
-# Or use full path in config
-"C:\\Users\\91735\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\rmcp.exe"
+```bash
+# Install
+pip install rmcp
+
+# Or add to PATH (check where pip installs scripts)
+python -m site --user-base
+# Add the Scripts/ (Windows) or bin/ (Linux/Mac) subdirectory to PATH
 ```
 
 ### DuckDB import error
-```powershell
-python -m pip install duckdb --upgrade
+
+```bash
+pip install duckdb --upgrade
 ```
 
 ### R not found by RMCP
-Ensure R_HOME is set in the MCP config env:
+
+Set `R_HOME` in the MCP config env:
 ```json
 "env": {
-  "R_HOME": "C:\\Program Files\\R\\R-4.5.2"
+  "R_HOME": "/usr/lib/R"
 }
 ```
 
-### Filesystem permission denied
-Make sure the path in args is accessible:
-```json
-"args": ["-y", "@modelcontextprotocol/server-filesystem", "D:\\Opencode\\Data Analysis\\IndiaData"]
+Common `R_HOME` values:
+- **Linux:** `/usr/lib/R` or `/usr/local/lib/R`
+- **macOS:** `/Library/Frameworks/R.framework/Resources`
+- **Windows:** `C:\\Program Files\\R\\R-4.x.x`
+
+### No parquet file found
+
+Run the analysis pipeline first to generate processed data:
+```bash
+Rscript run_analysis.R
 ```
 
----
+Or set `INDADATA_DATA_DIR` to point at your parquet files:
+```bash
+export INDADATA_DATA_DIR=/path/to/your/processed/data
+```
 
-## Paths Reference
+### Filesystem permission denied
 
-| Component | Path |
-|-----------|------|
-| Python | `C:\Users\91735\AppData\Local\Python\pythoncore-3.14-64\python.exe` |
-| RMCP | `C:\Users\91735\AppData\Local\Python\pythoncore-3.14-64\Scripts\rmcp.exe` |
-| R | `C:\Program Files\R\R-4.5.2\bin\Rscript.exe` |
-| Node.js | `C:\Program Files\nodejs\node.exe` |
-| Project | `D:\Opencode\Data Analysis\IndiaData` |
-| Parquet Data | `D:\Opencode\Data Analysis\IndiaData\data\processed\plfs_2024_persons.parquet` |
+Ensure the filesystem server has access to the project directory.
 
 ---
 
@@ -215,6 +260,7 @@ With these MCP servers, you can:
 
 ## Next Steps
 
-1. **Claude Desktop**: Copy config to `%APPDATA%\Claude\claude_desktop_config.json`
-2. **Restart** your MCP client (Claude Desktop, Cursor, etc.)
-3. **Test** by asking: "List available MCP tools"
+1. **Install prerequisites** (Python, R, Node.js, pip packages)
+2. **Copy** the appropriate MCP config to your client's config directory
+3. **Restart** your MCP client (Claude Desktop, Cursor, etc.)
+4. **Test** by asking: "List available MCP tools"

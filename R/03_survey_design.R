@@ -215,36 +215,78 @@ create_plfs_design <- function(data,
     "state", "sector", "cluster", "subsample"
   ))
 
-  # -------------------------------------------------------------------------
-  # Calculate final weights
-  # -------------------------------------------------------------------------
-
   # PLFS weight formula from official documentation:
   # For sub-sample estimates: Final_Weight = MULT / (NO_QTR * 100)
   # For combined estimates:
   #   - If NSS == NSC: Final_Weight = MULT / (NO_QTR * 100)
   #   - Otherwise: Final_Weight = MULT / (NO_QTR * 200)
-  # For Calendar Year data: Final_Weight = MULT / 100 (simpler)
+  # Where NO_QTR = count of contributing quarters per State x Sector x Stratum x Sub-Stratum
+  #
+  # For Calendar Year data without quarter info: Final_Weight = MULT / 100
 
   data <- copy(data) # Don't modify original
 
-  # Check if quarter variable has valid numeric data
-  qtr_valid <- FALSE
-  if (!is.na(qtr_var) && quarter_weights) {
-    n_quarters <- suppressWarnings(as.numeric(data[[qtr_var]]))
-    qtr_valid <- !all(is.na(n_quarters)) && all(n_quarters[!is.na(n_quarters)] > 0)
+  # Detect NSS and NSC variables for combined subsample weight adjustment
+  nss_var <- NA_character_
+  nsc_var <- NA_character_
+  col_names <- names(data)
+  
+  # Look for NSS (count per subsample) and NSC (count combined)
+  nss_patterns <- c("Ns_Count_Sector_Stratum_Substratum_Subsample", "NSS", "nss")
+  nsc_patterns <- c("Ns_Count_Sector_Stratum_Substratum", "NSC", "nsc")
+  
+  for (p in nss_patterns) {
+    m <- col_names[grepl(paste0("^", p, "$"), col_names, ignore.case = TRUE)]
+    if (length(m) > 0) { nss_var <- m[1]; break }
+  }
+  for (p in nsc_patterns) {
+    m <- col_names[grepl(paste0("^", p, "$"), col_names, ignore.case = TRUE)]
+    if (length(m) > 0) { nsc_var <- m[1]; break }
   }
 
-  if (qtr_valid && quarter_weights) {
-    if (subsample == "combined" && !is.na(ss_var)) {
-      # For combined sub-samples
-      message("Using combined sub-sample weight formula: MULT / (NO_QTR * 200)")
-      data[, .final_weight := get(weight_var) / (n_quarters * 200)]
+  # Compute NO_QTR: count of unique quarters per State x Sector x Stratum x SubStratum
+  no_qtr_computed <- FALSE
+  if (!is.na(qtr_var) && quarter_weights) {
+    # Build grouping columns for NO_QTR computation
+    group_vars <- character()
+    if (!is.na(state_var)) group_vars <- c(group_vars, state_var)
+    if (!is.na(sector_var)) group_vars <- c(group_vars, sector_var)
+    if (!is.na(stratum_var)) group_vars <- c(group_vars, stratum_var)
+    if (!is.na(substratum_var)) group_vars <- c(group_vars, substratum_var)
+    
+    if (length(group_vars) > 0) {
+      data[, .no_qtr := uniqueN(get(qtr_var)), by = mget(group_vars)]
+      no_qtr_computed <- TRUE
+      message(sprintf("Computed NO_QTR per %s (range: %d-%d)", 
+                      paste(group_vars, collapse=" x "),
+                      min(data$.no_qtr), max(data$.no_qtr)))
+    }
+  }
+
+  if (no_qtr_computed) {
+    if (subsample == "combined" && !is.na(nss_var) && !is.na(nsc_var)) {
+      # Combined estimate: compare NSS vs NSC per record
+      data[, .nss_val := as.numeric(get(nss_var))]
+      data[, .nsc_val := as.numeric(get(nsc_var))]
+      
+      n_equal <- sum(data$.nss_val == data$.nsc_val, na.rm = TRUE)
+      n_unequal <- sum(data$.nss_val != data$.nsc_val, na.rm = TRUE)
+      message(sprintf("Combined weight formula: MULT/(NO_QTR*100) when NSS=NSC, MULT/(NO_QTR*200) otherwise"))
+      message(sprintf("  NSS==NSC: %s records, NSS!=NSC: %s records", 
+                      format(n_equal, big.mark=","), format(n_unequal, big.mark=",")))
+      
+      data[, .final_weight := ifelse(
+        .nss_val == .nsc_val,
+        get(weight_var) / (.no_qtr * 100),
+        get(weight_var) / (.no_qtr * 200)
+      )]
+      data[, c(".nss_val", ".nsc_val") := NULL]
     } else {
       # Single sub-sample
       message("Using sub-sample weight formula: MULT / (NO_QTR * 100)")
-      data[, .final_weight := get(weight_var) / (n_quarters * 100)]
+      data[, .final_weight := get(weight_var) / (.no_qtr * 100)]
     }
+    data[, .no_qtr := NULL]
   } else {
     # No quarter adjustment (calendar year data or annual weights)
     message("Using simple weight formula: MULT / 100 (Calendar Year / Annual data)")

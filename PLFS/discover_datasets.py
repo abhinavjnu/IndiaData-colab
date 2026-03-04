@@ -4,11 +4,12 @@ Search for PLFS datasets on microdata.gov.in using direct API calls
 import requests
 import json
 import csv
+import os
 from pathlib import Path
 
 # API configuration
 BASE_URL = "https://microdata.gov.in/NADA/index.php/api"
-API_KEY = "b9390722ee0c75825700a9f9a7698566"
+API_KEY = os.environ.get("MOSPI_API_KEY", "YOUR_API_KEY_HERE")
 
 print("=== PLFS Dataset Discovery ===\n")
 

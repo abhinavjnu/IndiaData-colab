@@ -117,3 +117,5 @@ __pycache__/
 .Trashes
 ehthumbs.db
 Desktop.ini
+.ipynb_checkpoints/
+Data and Instructions from MOSPI/
