@@ -1,11 +1,16 @@
 # IndiaData: MoSPI Survey Microdata Analysis System
 
-![Validation Status: Verified](https://img.shields.io/badge/Validation-Verified_ against_Real_Data-success)
+![Validation Status: Verified](https://img.shields.io/badge/Validation-Verified_against_Real_Data-success)
 ![Accuracy](https://img.shields.io/badge/Accuracy-Exact_Match_(%3C0.01pp)-blue)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/abhinavjnu/IndiaData-colab/blob/main/IndiaData_PLFS_Analysis.ipynb)
 
 A comprehensive R-based automated workflow for analyzing large-scale Indian government survey data from [microdata.gov.in](https://microdata.gov.in), including PLFS (Periodic Labour Force Survey), HCES, NSS, and ASI.
 
 This pipeline has been **rigorously validated against real MoSPI PLFS Calendar Year 2024 data (415,000+ records)** and produces exact matches (within 0.01 percentage points) to official manual calculation methods for all major indicators (LFPR, WPR, UR).
+
+## 🚀 Run in Google Colab (No Setup Required!)
+
+**For researchers with no local R setup:** Click the badge above or [open in Colab directly](https://colab.research.google.com/github/abhinavjnu/IndiaData-colab/blob/main/IndiaData_PLFS_Analysis.ipynb). Upload your PLFS CSV, click Run All, and get results — zero installation needed.
 
 ## Features
 
